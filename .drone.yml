@@ -1,0 +1,19 @@
+kind: pipeline
+name: simple-proxy-build-pipeline
+
+platform:
+  os: linux
+  arch: amd64
+
+
+steps:
+  - name: docker  
+    image: plugins/docker
+    settings:
+      repo: 0xProject/proxy
+      tags:
+        - ${DRONE_COMMIT_SHA}
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password

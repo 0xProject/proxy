@@ -13,7 +13,13 @@ func NewProxy(pc *ProxyConfig) (*httputil.ReverseProxy, error) {
 	}
 	proxy := httputil.NewSingleHostReverseProxy(targetURL)
 	proxy.Director = func(req *http.Request) {
-		req.URL.Query().Add(pc.QueryParamName, pc.QueryParamValue)
+		req.URL.Scheme = targetURL.Scheme
+		req.URL.Host = targetURL.Host
+		req.Host = targetURL.Host
+		// Add new query params
+		newQueryValues := req.URL.Query()
+		newQueryValues.Add(pc.QueryParamName, pc.QueryParamValue)
+		req.URL.RawQuery = newQueryValues.Encode()
 	}
 	return proxy, nil
 }

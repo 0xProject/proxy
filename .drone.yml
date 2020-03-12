@@ -1,19 +1,53 @@
 kind: pipeline
-name: simple-proxy-build-pipeline
+name: proxy-pipeline-sha
 
 platform:
   os: linux
   arch: amd64
 
-
 steps:
-  - name: docker  
-    image: plugins/docker
+  - name: publish-sha
+    image: plugins/ecr
     settings:
-      repo: 0xProject/proxy
+      access_key:
+        from_secret: aws_ecr_key
+      secret_key:
+        from_secret: aws_ecr_secret
+      repo:
+        from_secret: ecr_repo
+      registry:
+        from_secret: ecr_registry
+      region: us-east-1
       tags:
         - ${DRONE_COMMIT_SHA}
-      username:
-        from_secret: docker_username
-      password:
-        from_secret: docker_password
+trigger:
+  event:
+    exclude:
+    - pull_request
+---
+name: proxy
+kind: pipeline
+type: docker
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+  - name: publish  
+    image: plugins/ecr
+    settings:
+      repo:
+        from_secret: ecr_repo
+      registry:
+        from_secret: ecr_registry
+      region: us-east-1
+      tags:
+        - latest
+
+trigger:
+  branch:
+  - master
+  event:
+    include:
+      - push

@@ -3,11 +3,16 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/caarlos0/env/v6"
 
 	log "github.com/sirupsen/logrus"
 )
+
+type CacheConfig struct {
+	CacheExpiration time.Duration `env:"CACHE_EXPIRATION" envDefault:"2m"`
+}
 
 type ProxyConfig struct {
 	// Port on which the proxy is listening

@@ -35,7 +35,7 @@ func (cache *InMemoryCache) Get(key string) ([]byte, bool) {
 	defer cache.mu.RUnlock()
 
 	value, ok := cache.storage[key]
-	if value.Expired() || !ok {
+	if !ok || value.Expired() {
 		return nil, false
 	}
 

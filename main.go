@@ -3,11 +3,16 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/caarlos0/env/v6"
 
 	log "github.com/sirupsen/logrus"
 )
+
+type CacheConfig struct {
+	CacheExpiration time.Duration `env:"CACHE_EXPIRATION" envDefault:"2m"`
+}
 
 type ProxyConfig struct {
 	// Port on which the proxy is listening
@@ -30,15 +35,20 @@ func main() {
 	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("could not parse config: %s", err)
 	}
+	cacheCfg := CacheConfig{}
+	if err := env.Parse(&cacheCfg); err != nil {
+		log.Fatalf("could not parse cache config: %s", err)
+	}
 
 	log.WithFields(log.Fields{
 		"Port":            cfg.Port,
 		"TargetURL":       cfg.TargetURL,
 		"QueryParamName":  cfg.QueryParamName,
 		"QueryParamValue": cfg.QueryParamValue,
+		"CacheExpiration": cacheCfg.CacheExpiration,
 	}).Info("parsed config successfully")
 
-	proxy, err := NewProxy(&cfg)
+	proxy, err := NewCachedProxy(&cfg, &cacheCfg)
 	if err != nil {
 		log.Fatalf("failed to create a new proxy: %s", err)
 	}

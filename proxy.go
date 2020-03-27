@@ -1,10 +1,78 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+
+	log "github.com/sirupsen/logrus"
 )
+
+func writeError(w http.ResponseWriter, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusBadRequest)
+	fmt.Fprintf(w, `{"result":"","error":%q}`, message)
+}
+
+type cachedProxy struct {
+	proxy *httputil.ReverseProxy
+	cache Cacher
+}
+
+// setModifyResponse modifies the response to store it in cache
+func (c *cachedProxy) setModifyResponse() *cachedProxy {
+	c.proxy.ModifyResponse = c.updateResponseCache
+	return c
+}
+
+func (c *cachedProxy) updateResponseCache(res *http.Response) error {
+	b, _ := ioutil.ReadAll(res.Body)
+	res.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+
+	c.cache.Set(res.Request.URL.RequestURI(), b)
+	return nil
+}
+
+func (c *cachedProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	requestURI := r.URL.RequestURI()
+	value, ok := c.cache.Get(requestURI)
+	// Serve from memory
+	if ok {
+		// NOTE: This will only return an error when:
+		// - If the connection was hijacked (see http.Hijacker): http.ErrHijacked
+		// - If writing data to the actual connection fails.
+		// This also automatically sets the headers.
+		_, err := w.Write(value)
+		if err != nil {
+			log.WithError(err).Error("failed to return back value")
+			writeError(w, "failed to handle request")
+			return
+		}
+
+		return
+	}
+
+	c.proxy.ServeHTTP(w, r)
+}
+
+func NewCachedProxy(pc *ProxyConfig, cacheConfig *CacheConfig) (http.Handler, error) {
+	proxy, err := NewProxy(pc)
+	if err != nil {
+		return nil, err
+	}
+
+	cache := NewInMemoryCache(cacheConfig)
+
+	cachedProxy := &cachedProxy{
+		cache: cache,
+		proxy: proxy,
+	}
+
+	return cachedProxy.setModifyResponse(), nil
+}
 
 func NewProxy(pc *ProxyConfig) (*httputil.ReverseProxy, error) {
 	targetURL, err := url.Parse(pc.TargetURL)
@@ -23,5 +91,6 @@ func NewProxy(pc *ProxyConfig) (*httputil.ReverseProxy, error) {
 			req.URL.RawQuery = newQueryValues.Encode()
 		}
 	}
+
 	return proxy, nil
 }

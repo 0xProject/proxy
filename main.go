@@ -35,15 +35,20 @@ func main() {
 	if err := env.Parse(&cfg); err != nil {
 		log.Fatalf("could not parse config: %s", err)
 	}
+	cacheCfg := CacheConfig{}
+	if err := env.Parse(&cacheCfg); err != nil {
+		log.Fatalf("could not parse cache config: %s", err)
+	}
 
 	log.WithFields(log.Fields{
 		"Port":            cfg.Port,
 		"TargetURL":       cfg.TargetURL,
 		"QueryParamName":  cfg.QueryParamName,
 		"QueryParamValue": cfg.QueryParamValue,
+		"CacheExpiration": cacheCfg.CacheExpiration,
 	}).Info("parsed config successfully")
 
-	proxy, err := NewProxy(&cfg)
+	proxy, err := NewCachedProxy(&cfg, &cacheCfg)
 	if err != nil {
 		log.Fatalf("failed to create a new proxy: %s", err)
 	}

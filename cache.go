@@ -36,6 +36,7 @@ func (cache *InMemoryCache) Get(key string) ([]byte, bool) {
 
 	value, ok := cache.storage[key]
 	if !ok || value.Expired() {
+		delete(cache.storage, key)
 		return nil, false
 	}
 

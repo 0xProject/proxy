@@ -90,6 +90,9 @@ func NewProxy(pc *ProxyConfig) (*httputil.ReverseProxy, error) {
 			newQueryValues.Add(pc.QueryParamName, pc.QueryParamValue)
 			req.URL.RawQuery = newQueryValues.Encode()
 		}
+		if pc.HeaderName != "" {
+			req.Header.Add(pc.HeaderName, pc.HeaderValue)
+		}
 	}
 
 	return proxy, nil

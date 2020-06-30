@@ -30,12 +30,15 @@ func (c *cachedProxy) setModifyResponse() *cachedProxy {
 
 func (c *cachedProxy) updateResponseCache(res *http.Response) error {
 	if res.StatusCode >= 300 {
+		log.Debug("status code >= 300 not caching response")
 		return nil
 	}
 	b, _ := ioutil.ReadAll(res.Body)
 	res.Body = ioutil.NopCloser(bytes.NewBuffer(b))
 
-	c.cache.Set(res.Request.URL.RequestURI(), b)
+	requestURI := res.Request.URL.RequestURI()
+	log.WithField("requestURI", requestURI).Debug("setting cache for request")
+	c.cache.Set(requestURI, b)
 	return nil
 }
 

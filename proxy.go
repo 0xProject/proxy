@@ -18,8 +18,9 @@ func writeError(w http.ResponseWriter, message string) {
 }
 
 type cachedProxy struct {
-	proxy *httputil.ReverseProxy
-	cache Cacher
+	proxy       *httputil.ReverseProxy
+	cache       Cacher
+	proxyConfig *ProxyConfig
 }
 
 // setModifyResponse modifies the response to store it in cache
@@ -44,6 +45,11 @@ func (c *cachedProxy) updateResponseCache(res *http.Response) error {
 
 func (c *cachedProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	requestURI := r.URL.RequestURI()
+	if c.proxyConfig.QueryParamName != "" {
+		requestQuery := r.URL.Query()
+		requestQuery.Add(c.proxyConfig.QueryParamName, c.proxyConfig.QueryParamValue)
+		requestURI = requestQuery.Encode()
+	}
 	value, ok := c.cache.Get(requestURI)
 	// Serve from memory
 	if ok {
@@ -75,8 +81,9 @@ func NewCachedProxy(pc *ProxyConfig, cacheConfig *CacheConfig) (http.Handler, er
 	cache := NewInMemoryCache(cacheConfig)
 
 	cachedProxy := &cachedProxy{
-		cache: cache,
-		proxy: proxy,
+		cache:       cache,
+		proxy:       proxy,
+		proxyConfig: pc,
 	}
 
 	return cachedProxy.setModifyResponse(), nil

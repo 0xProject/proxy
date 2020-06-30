@@ -58,6 +58,7 @@ func (c *cachedProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// - If the connection was hijacked (see http.Hijacker): http.ErrHijacked
 		// - If writing data to the actual connection fails.
 		// This also automatically sets the headers.
+		w.Header().Set("Content-Type", "application/json")
 		_, err := w.Write(value)
 		if err != nil {
 			log.WithError(err).Error("failed to return back value")

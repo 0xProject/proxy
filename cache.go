@@ -31,8 +31,8 @@ type InMemoryCache struct {
 }
 
 func (cache *InMemoryCache) Get(key string) ([]byte, bool) {
-	cache.mu.RLock()
-	defer cache.mu.RUnlock()
+	cache.mu.Lock()
+	defer cache.mu.Unlock()
 
 	value, ok := cache.storage[key]
 	if !ok || value.Expired() {

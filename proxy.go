@@ -48,7 +48,7 @@ func (c *cachedProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if c.proxyConfig.QueryParamName != "" {
 		requestQuery := r.URL.Query()
 		requestQuery.Add(c.proxyConfig.QueryParamName, c.proxyConfig.QueryParamValue)
-		requestURI = requestQuery.Encode()
+		requestURI = fmt.Sprintf("%s?%s", requestURI, requestQuery.Encode())
 	}
 	value, ok := c.cache.Get(requestURI)
 	// Serve from memory

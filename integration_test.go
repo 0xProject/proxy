@@ -9,6 +9,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type responder struct {
@@ -59,4 +61,32 @@ func TestProxyRoundtrip(t *testing.T) {
 	secondResponseBody, err := ioutil.ReadAll(resp2.Body)
 	require.NoError(t, err)
 	require.Equal(t, secondResponseBody, firstValue)
+}
+
+func TestEthGasStationRoundtrip(t *testing.T) {
+	requestTarget := "https://ethgasstation.info/api/ethgasAPI.json?api-key=x"
+	query := "/api/ethgasAPI.json?hey=whats-the-rate-limit"
+	log.SetLevel(6)
+	cachedProxy, err := NewCachedProxy(&ProxyConfig{
+		TargetURL: requestTarget,
+	}, &CacheConfig{
+		CacheExpiration: 5 * time.Second,
+	})
+	require.NoError(t, err)
+
+	ps := httptest.NewServer(cachedProxy)
+
+	proxyClient := ps.Client()
+
+	_, err = proxyClient.Get(ps.URL + query)
+	require.NoError(t, err)
+
+	for i := 0; i < 8; i++ {
+		resp2, err := proxyClient.Get(ps.URL + query)
+		require.NoError(t, err)
+		_, err = ioutil.ReadAll(resp2.Body)
+		require.NoError(t, err)
+		time.Sleep(1 * time.Second)
+	}
+
 }

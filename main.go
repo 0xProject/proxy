@@ -32,6 +32,9 @@ type ProxyConfig struct {
 
 	// The value of the header to add to requests
 	HeaderValue string `env:"HEADER_VALUE"`
+
+	// LogLevel is the logging verbosity: 0=panic, 1=fatal, 2=error, 3=warn, 4=info, 5=debug 6=trace
+	LogLevel int `enc:"LOG_LEVEL" default:"5"`
 }
 
 func main() {
@@ -46,6 +49,7 @@ func main() {
 		log.Fatalf("could not parse cache config: %s", err)
 	}
 
+	log.SetLevel(log.Level(cfg.LogLevel))
 	log.WithFields(log.Fields{
 		"Port":            cfg.Port,
 		"TargetURL":       cfg.TargetURL,

@@ -29,6 +29,9 @@ func (c *cachedProxy) setModifyResponse() *cachedProxy {
 }
 
 func (c *cachedProxy) updateResponseCache(res *http.Response) error {
+	if res.StatusCode >= 300 {
+		return nil
+	}
 	b, _ := ioutil.ReadAll(res.Body)
 	res.Body = ioutil.NopCloser(bytes.NewBuffer(b))
 
@@ -41,6 +44,7 @@ func (c *cachedProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	value, ok := c.cache.Get(requestURI)
 	// Serve from memory
 	if ok {
+		log.WithField("requestURI", requestURI).Debug("serving request from memory")
 		// NOTE: This will only return an error when:
 		// - If the connection was hijacked (see http.Hijacker): http.ErrHijacked
 		// - If writing data to the actual connection fails.
@@ -55,6 +59,7 @@ func (c *cachedProxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.WithField("requestURI", requestURI).Debug("serving request through proxy")
 	c.proxy.ServeHTTP(w, r)
 }
 

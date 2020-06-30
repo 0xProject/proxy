@@ -31,12 +31,11 @@ type InMemoryCache struct {
 }
 
 func (cache *InMemoryCache) Get(key string) ([]byte, bool) {
-	cache.mu.Lock()
-	defer cache.mu.Unlock()
+	cache.mu.RLock()
+	defer cache.mu.RUnlock()
 
 	value, ok := cache.storage[key]
 	if !ok || value.Expired() {
-		delete(cache.storage, key)
 		return nil, false
 	}
 

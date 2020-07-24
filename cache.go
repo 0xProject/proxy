@@ -83,13 +83,14 @@ func (cache *InMemoryCache) RoundTrip(r *http.Request) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	// Store the response in cache.
-	buf, err := httputil.DumpResponse(resp, true)
-	if err != nil {
-		return nil, err
+	if resp.StatusCode < 300 {
+		// Store the response in cache.
+		buf, err := httputil.DumpResponse(resp, true)
+		if err != nil {
+			return nil, err
+		}
+		cache.Set(r, buf)
 	}
-	cache.Set(r, buf)
 	return resp, nil
 }
 

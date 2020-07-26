@@ -1,5 +1,6 @@
 name: proxy-pipeline-sha
 kind: pipeline
+type: kubernetes
 
 platform:
   os: linux
@@ -9,10 +10,6 @@ steps:
   - name: publish-sha
     image: plugins/ecr
     settings:
-      access_key:
-        from_secret: aws_ecr_key
-      secret_key:
-        from_secret: aws_ecr_secret
       repo:
         from_secret: ecr_repo
       registry:
@@ -27,7 +24,7 @@ trigger:
 ---
 name: proxy-pipeline
 kind: pipeline
-type: docker
+type: kubernetes
 
 platform:
   os: linux

@@ -21,6 +21,8 @@ trigger:
   event:
     exclude:
     - pull_request
+node_selector:
+  drone-builds: true
 ---
 name: proxy-pipeline
 kind: pipeline
@@ -48,3 +50,5 @@ trigger:
   event:
     include:
       - push
+node_selector:
+  drone-builds: true

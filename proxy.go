@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"time"
 )
 
 type cachedProxy struct {
@@ -52,6 +53,12 @@ func NewProxy(pc *ProxyConfig) (*httputil.ReverseProxy, error) {
 		}
 		if pc.HeaderName != "" {
 			req.Header.Add(pc.HeaderName, pc.HeaderValue)
+		}
+	}
+
+	if pc.ResponseTimeout != 0 {
+		proxy.Transport = &http.Transport{
+			ResponseHeaderTimeout: time.Duration(pc.ResponseTimeout) * time.Second,
 		}
 	}
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -56,10 +57,19 @@ func NewProxy(pc *ProxyConfig) (*httputil.ReverseProxy, error) {
 		}
 	}
 
-	if pc.ResponseTimeout != 0 {
-		proxy.Transport = &http.Transport{
-			ResponseHeaderTimeout: time.Duration(pc.ResponseTimeout) * time.Second,
-		}
+	proxy.Transport = &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		ResponseHeaderTimeout: pc.ResponseTimeout,
 	}
 
 	return proxy, nil

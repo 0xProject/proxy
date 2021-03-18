@@ -96,7 +96,7 @@ func TestProxyRequestTimeoutWithTimout(t *testing.T) {
 	query := "/200?sleep=10000"
 	log.SetLevel(6)
 	proxy, err := NewProxy(&ProxyConfig{
-		ResponseTimeout: 1,
+		ResponseTimeout: 1 * time.Second,
 		TargetURL:       slowRequestTarget,
 	})
 	require.NoError(t, err)
@@ -119,7 +119,7 @@ func TestProxyRequestTimeoutWithoutTimout(t *testing.T) {
 	query := "/200?sleep=1000"
 	log.SetLevel(6)
 	proxy, err := NewProxy(&ProxyConfig{
-		ResponseTimeout: 2,
+		ResponseTimeout: 2 * time.Second,
 		TargetURL:       slowRequestTarget,
 	})
 	require.NoError(t, err)

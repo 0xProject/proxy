@@ -90,3 +90,49 @@ func TestEthGasStationRoundtrip(t *testing.T) {
 	}
 
 }
+
+func TestProxyRequestTimeoutWithTimout(t *testing.T) {
+	slowRequestTarget := "https://httpstat.us"
+	query := "/200?sleep=10000"
+	log.SetLevel(6)
+	proxy, err := NewProxy(&ProxyConfig{
+		ResponseTimeout: 1 * time.Second,
+		TargetURL:       slowRequestTarget,
+	})
+	require.NoError(t, err)
+
+	ps := httptest.NewServer(proxy)
+
+	proxyClient := ps.Client()
+
+	resp, err := proxyClient.Get(ps.URL + query)
+	require.NoError(t, err)
+
+	_, err = ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	require.Equal(t, resp.StatusCode, 502)
+}
+
+func TestProxyRequestTimeoutWithoutTimout(t *testing.T) {
+	slowRequestTarget := "https://httpstat.us"
+	query := "/200?sleep=1000"
+	log.SetLevel(6)
+	proxy, err := NewProxy(&ProxyConfig{
+		ResponseTimeout: 2 * time.Second,
+		TargetURL:       slowRequestTarget,
+	})
+	require.NoError(t, err)
+
+	ps := httptest.NewServer(proxy)
+
+	proxyClient := ps.Client()
+
+	resp, err := proxyClient.Get(ps.URL + query)
+	require.NoError(t, err)
+
+	_, err = ioutil.ReadAll(resp.Body)
+	require.NoError(t, err)
+
+	require.Equal(t, resp.StatusCode, 200)
+}

@@ -33,6 +33,9 @@ type ProxyConfig struct {
 	// The value of the header to add to requests
 	HeaderValue string `env:"HEADER_VALUE"`
 
+	// Response timeout for proxy requests
+	ResponseTimeout time.Duration `env:"RESPONSE_TIMEOUT" envDefault:"30s"`
+
 	// LogLevel is the logging verbosity: 0=panic, 1=fatal, 2=error, 3=warn, 4=info, 5=debug 6=trace
 	LogLevel int `env:"LOG_LEVEL" envDefault:"5"`
 }

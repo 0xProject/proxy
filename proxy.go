@@ -5,7 +5,12 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
 	"time"
+)
+
+var (
+	swapQuotePath = regexp.MustCompile(`(.*)/swap/v1/quote(.*)`)
 )
 
 type cachedProxy struct {
@@ -46,15 +51,19 @@ func NewProxy(pc *ProxyConfig) (*httputil.ReverseProxy, error) {
 		req.URL.Scheme = targetURL.Scheme
 		req.URL.Host = targetURL.Host
 		req.Host = targetURL.Host
+		newQueryValues := req.URL.Query()
+		if swapQuotePath.MatchString(req.URL.Path) {
+			newQueryValues.Add("skipValidation", "false")
+		}
 		if pc.QueryParamName != "" {
 			// Add new query params
-			newQueryValues := req.URL.Query()
 			newQueryValues.Add(pc.QueryParamName, pc.QueryParamValue)
-			req.URL.RawQuery = newQueryValues.Encode()
 		}
 		if pc.HeaderName != "" {
 			req.Header.Add(pc.HeaderName, pc.HeaderValue)
 		}
+
+		req.URL.RawQuery = newQueryValues.Encode()
 	}
 
 	proxy.Transport = &http.Transport{
